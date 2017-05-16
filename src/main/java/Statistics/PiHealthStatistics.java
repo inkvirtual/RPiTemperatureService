@@ -10,12 +10,16 @@ import java.util.Map;
  * Created by dev on 16.05.2017.
  */
 public class PiHealthStatistics {
-    private Map<Time, PiHealthRecord> records;
+    // map <timestamp in ms, PiHealthRecord>
+    private Map<long, PiHealthRecord> records;
+    private int maxRecordsNumber;
 
     private static PiHealthStatistics instance;
 
     private PiHealthStatistics() {
         records = new HashMap();
+        //TODO: load maxRecordsNumber value from config
+        maxRecordsNumber = 100;
     }
 
     public static PiHealthStatistics getInstance() {
@@ -25,7 +29,44 @@ public class PiHealthStatistics {
     }
 
     public Result addRecord(int cpuTemp, int cpuFreq, boolean fanIsOn) {
-        throw new NotImplementedException();
+        if (cpuTemp < 1 || cpuFrequency < 1)
+            return Result.INVALID_ARGUMENT_PROVIDED;
+        
+        // delete oldest record
+        if (this.records.size() > maxRecordsNumber) {
+         // TODO: implement deleting oldest element in the map, or perform resize(sublist)  
+        }
+        
+        this.records.put(System.currentTimeMillis(), new PiHealthRecord(cpuTemp, cpuFreq, fanIsOn));
+        return Result.OK;
+    }
+    
+    public Map<long, PiHealthRecord> getRecords() {
+        return records;
+    }
+    
+    public Map<long, PiHealthRecord> getRecordsMapSince(long timestamp) {
+        if (timeStamp < 1 || timeStamp > System.currentTimeMillis() {
+            // TODO: print a proper error message ?!
+            return null;
+        }
+        
+        Map<long, PiHealthRecord> recordsSince = new HashMap();
+        
+        // TODO: implement
+        return recordsSince;
+    }
+    
+    public List<PiHealthRecord> getRecordsListSince(long timeStamp) {
+        if (timeStamp < 1 || timeStamp > System.currentTimeMillis() {
+            // TODO: print a proper error message ?!
+            return null;
+        }
+        
+        List<PiHealthRecord> recordsSince = new ArrayList();
+        
+        // TODO: implement
+        return recordsSince;
     }
 
     private void clear() {
@@ -35,5 +76,6 @@ public class PiHealthStatistics {
 
 enum Result {
     OK,
+    INVALID_ARGUMENT_PROVIDED,
     UNKNOWN_ERROR
 }
