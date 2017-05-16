@@ -18,8 +18,8 @@ public class PiHealthStatistics {
 
     private PiHealthStatistics() {
         records = new HashMap();
-        //TODO: load maxRecordsNumber value from config
-        maxRecordsNumber = 100;
+        //TODO: verify this
+        maxRecordsNumber = Integer.parseInt(Configuration.getInstance().getProperties().getOrDefault("statistics.records.number", "100"));
     }
 
     public static PiHealthStatistics getInstance() {
