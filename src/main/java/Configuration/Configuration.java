@@ -1,3 +1,7 @@
+package Configuration;
+
+import RaspberryPi.RPi;
+
 import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
@@ -39,7 +43,7 @@ public class Configuration {
 
     @Override
     public String toString() {
-        return "Configuration{" +
+        return "Configuration.Configuration{" +
                 "properties=" + properties +
                 '}';
     }

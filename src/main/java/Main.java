@@ -1,3 +1,7 @@
+import Configuration.Configuration;
+import RaspberryPi.RPi;
+import Statistics.PiHealthStatistics;
+
 import java.util.Map;
 
 /**
@@ -14,7 +18,7 @@ public class Main {
     static State state;
 
     public static void main(String[] args) {
-        System.out.println("Starting RPi Temperature Service");
+        System.out.println("Starting RaspberryPi.RPi Temperature Service");
 
         if (!loadResourcesPath(args)) {
             System.err.println("failed to load resources path, closing service");
@@ -23,7 +27,7 @@ public class Main {
 
         //DEBUG
 //        {
-//                System.out.println(PiBash.execute(RPi.getResource("example.bat")));
+//                System.out.println(PiBash.execute(RaspberryPi.RPi.getResource("example.bat")));
 //        }
 
         Map<String, String> config = Configuration.getInstance().getProperties();
@@ -133,7 +137,7 @@ public class Main {
                     stopFan();
 
                     if (fanFailureAction.equals(FanFailureAction.SHUTDOWN)) {
-                        System.out.println("Service execution terminated, shutting down RPi");
+                        System.out.println("Service execution terminated, shutting down RaspberryPi.RPi");
                         RPi.shutdown();
                     }
                     terminated = true;
@@ -157,7 +161,7 @@ public class Main {
 //                    //TODO: log error
 //                    stopFan();
 //                    if (fanFailureAction.equals(FanFailureAction.SHUTDOWN)) {
-//                        RPi.shutdown();
+//                        RaspberryPi.RPi.shutdown();
 //                    }
 //                    return;
 //                }
@@ -176,7 +180,7 @@ public class Main {
 //                        //TODO: log error
 //                        stopFan();
 //                        if (fanFailureAction.equals(FanFailureAction.SHUTDOWN)) {
-//                            RPi.shutdown();
+//                            RaspberryPi.RPi.shutdown();
 //                        }
 ////                        return;
 //                        break;
@@ -189,6 +193,21 @@ public class Main {
 //            }
 //            sleep(sleepTimeMs);
 //        }
+    }
+
+    //TODO: run in a separate thread, move in other class ???
+    public void addRecord() {
+        boolean fail = false;
+        while (!fail) {
+            try {
+                PiHealthStatistics.getInstance().addRecord(Cpu.getTemperature(), Cpu.getFrequency(), Fan.getInstance().getStatus());
+            } catch (Exception ex) {
+                fail = true;
+                //TODO: log error
+            }
+
+            sleep(2_000);
+        }
     }
 
     private static void switchState(State newState) {
