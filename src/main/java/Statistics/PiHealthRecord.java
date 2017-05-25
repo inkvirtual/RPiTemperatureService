@@ -25,7 +25,7 @@ public class PiHealthRecord {
         return cpuFrequency;
     }
 
-    public boolean isFanIsOn() {
+    public boolean isFanOn() {
         return fanIsOn;
     }
 }

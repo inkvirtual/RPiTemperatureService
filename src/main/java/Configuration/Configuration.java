@@ -2,7 +2,7 @@ package Configuration;
 
 import RaspberryPi.RPi;
 
-import java.io.*;
+import java.io.FileInputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -12,20 +12,16 @@ import java.util.Properties;
  */
 public class Configuration {
     private static Configuration instance;
+    private RPi pi;
     private Map<String, String> properties;
 
-    public static Configuration getInstance() {
-        if (null == instance)
-            instance = new Configuration();
-        return instance;
-    }
-
     private Configuration() {
+        pi = new RPi();
         properties = new HashMap<String, String>();
 
         try {
             Properties propsFile = new Properties();
-            propsFile.load(new FileInputStream(RPi.getResource("rpi_temperature_service.properties")));
+            propsFile.load(new FileInputStream(pi.getResourceContent("rpi_temperature_service.properties")));
 
             for (Map.Entry<Object, Object> entry : propsFile.entrySet()) {
                 properties.put(entry.getKey().toString(), entry.getValue().toString());
@@ -34,6 +30,12 @@ public class Configuration {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public static Configuration getInstance() {
+        if (null == instance)
+            instance = new Configuration();
+        return instance;
     }
 
     public Map<String, String> getProperties() {

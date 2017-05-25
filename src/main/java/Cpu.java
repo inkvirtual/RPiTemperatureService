@@ -1,4 +1,5 @@
-import java.util.Random;
+import RaspberryPi.PiBash;
+import RaspberryPi.RPi;
 
 /*
  * Created by dev on 28.03.2017.
@@ -7,23 +8,27 @@ public class Cpu {
     private static final int LOW_FREQUENCY = 600000;
     private static final int HIGH_FREQUENCY = 1200000;
 
-    public static int getUsage() {
-        //return Integer.parseInt(PiBash.execute(RPi.getResource("get_cpu_usage.sh")));
-        return 21;
+    private PiBash bash;
+    private RPi pi;
+
+    public Cpu() {
+        this.bash = new PiBash();
+        this.pi = new RPi();
     }
 
-    public static float getTemperature() {
-//        return Float.parseFloat(PiBash.execute(RPi.getResource("get_cpu_temperature.sh")));
-        //Rand [40,81)
-        return Float.valueOf(new Random().nextInt(41) + 40);
+    public int getUsage() {
+        return Integer.parseInt(bash.execute(pi.getResourceContent("get_cpu_usage.sh")));
     }
 
-    public static int getFrequency() {
-//        return Integer.parseInt(PiBash.execute(RPi.getResource("get_cpu_frequency.sh")));
-        return 1200000;
+    public double getTemperature() {
+        return Double.parseDouble(bash.execute(pi.getResourceContent("get_cpu_temperature.sh")));
     }
 
-    public static boolean isThrottling() {
+    public int getFrequency() {
+        return Integer.parseInt(bash.execute(pi.getResourceContent("get_cpu_frequency.sh")));
+    }
+
+    public boolean isThrottling() {
         int frequency = getFrequency();
 
         //if frequency  = (600010,1199990)

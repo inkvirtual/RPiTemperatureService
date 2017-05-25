@@ -1,6 +1,7 @@
+package RaspberryPi;
+
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 
 /**
@@ -8,7 +9,12 @@ import java.io.InputStreamReader;
  */
 public class PiBash {
 
-    public static String execute(String command) {
+    public String execute(String command) {
+        return execute_internal(command);
+    }
+
+    private String execute_internal(String command) {
+//    public String execute(String command) {
         StringBuilder returnValue = new StringBuilder();
         BufferedReader in = null;
         boolean failed = false;
@@ -37,7 +43,7 @@ public class PiBash {
         }
     }
 
-    private static void closeReader(BufferedReader in) {
+    private void closeReader(BufferedReader in) {
         if (null != in)
             try {
                 in.close();

@@ -1,6 +1,8 @@
 import Configuration.Configuration;
 import RaspberryPi.RPi;
 import Statistics.PiHealthStatistics;
+import sun.plugin2.gluegen.runtime.CPU;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.Map;
 
@@ -16,6 +18,8 @@ public class Main {
     static FanFailureAction fanFailureAction;
     static long sleepTimeMs;
     static State state;
+//    CPU cpu;
+//    RPi pi;
 
     public static void main(String[] args) {
         System.out.println("Starting RaspberryPi.RPi Temperature Service");
@@ -27,9 +31,11 @@ public class Main {
 
         //DEBUG
 //        {
-//                System.out.println(PiBash.execute(RaspberryPi.RPi.getResource("example.bat")));
+//                System.out.println(RaspberryPi.PiBash.execute(RaspberryPi.RPi.getResourceContent("example.bat")));
 //        }
 
+//        cpu = new CPU();
+//        pi = new RPi();
         Map<String, String> config = Configuration.getInstance().getProperties();
         fanAlwaysOn = config.getOrDefault("fan.always.on", "false").equals("true") ? true : false;
         fanStartTempC = Float.parseFloat(config.getOrDefault("fan.start.temperature.celsius", "70"));
@@ -49,7 +55,7 @@ public class Main {
 
             switch (state) {
                 case CHECKING_SYSTEM:
-                    float cpuTemp = Cpu.getTemperature();
+                    double cpuTemp = getCpuTemperature();
 
                     //DEBUG
                     System.out.println("CPU Temp:" + cpuTemp + "C");
@@ -61,7 +67,7 @@ public class Main {
                     }
 
                     if (fanShouldStartAtHighCpuUsage) {
-                        int cpuUsage = Cpu.getUsage();
+                        int cpuUsage = getCpuUsage();
 
                         if (cpuUsage > cpuHighUsagePercent) {
                             System.out.println("CPU Usage:" + cpuUsage + "%, trigger point:" + cpuHighUsagePercent + "%");
@@ -70,14 +76,14 @@ public class Main {
                         }
                     }
 
-                    if (Cpu.isThrottling()) {
-                        System.err.println("CPU Throttling detected, frequency:" + Cpu.getFrequency() + "MHz");
+                    if (isCpuThrottling()) {
+                        System.err.println("CPU Throttling detected, frequency:" + getCpuFrequency() + "MHz");
                         switchState(State.STARTING_FAN);
                         break;
                     }
 
                     if (fanIsOn()) {
-                        System.out.println("System cooled down:" + cpuTemp + "C, " + Cpu.getFrequency() + "MHz");
+                        System.out.println("System cooled down:" + cpuTemp + "C, " + getCpuFrequency() + "MHz");
                         switchState(State.STOPPING_FAN);
                     }
 
@@ -112,8 +118,8 @@ public class Main {
                         //Sleep for 10s
                         sleep(10000);
 
-                        if (Cpu.isThrottling()) {
-                            System.err.println("CPU Throttling detected, frequency:" + Cpu.getFrequency() + "MHz");
+                        if (isCpuThrottling()) {
+                            System.err.println("CPU Throttling detected, frequency:" + getCpuFrequency() + "MHz");
                             switchState(State.TERMINATING);
                             break;
                         }
@@ -138,7 +144,7 @@ public class Main {
 
                     if (fanFailureAction.equals(FanFailureAction.SHUTDOWN)) {
                         System.out.println("Service execution terminated, shutting down RaspberryPi.RPi");
-                        RPi.shutdown();
+                        new RPi().shutdown();
                     }
                     terminated = true;
                     break;
@@ -195,25 +201,26 @@ public class Main {
 //        }
     }
 
-    //TODO: run in a separate thread, move in other class ???
-    public void addRecord() {
-        boolean fail = false;
-        while (!fail) {
-            try {
-                PiHealthStatistics.getInstance().addRecord(Cpu.getTemperature(), Cpu.getFrequency(), Fan.getInstance().getStatus());
-            } catch (Exception ex) {
-                fail = true;
-                //TODO: log error
-            }
+    protected static int getCpuUsage() {
+        return new Cpu().getUsage();
+    }
 
-            sleep(2_000);
-        }
+    protected static int getCpuFrequency() {
+        return new Cpu().getFrequency();
+    }
+
+    protected static boolean isCpuThrottling() {
+        return new Cpu().isThrottling();
+    }
+
+    protected static double getCpuTemperature() {
+        return new Cpu().getTemperature();
     }
 
     private static void switchState(State newState) {
         //If multiple consecutive switches to the same state, then print only once
         if (!newState.equals(state))
-            System.out.println("Switch state to " + newState);
+            System.out.println("Switch state from " + state.name() + " to " + newState.name());
 
         state = newState;
     }
@@ -249,11 +256,11 @@ public class Main {
     }
 
     private static boolean shouldStartFan() {
-        if (Cpu.getTemperature() > fanStartTempC)
+        if (getCpuTemperature() > fanStartTempC)
             return true;
 
         if (fanShouldStartAtHighCpuUsage) {
-            if (Cpu.getUsage() >= cpuHighUsagePercent)
+            if (getCpuUsage() >= cpuHighUsagePercent)
                 return true;
         }
 
@@ -270,6 +277,21 @@ public class Main {
             Thread.sleep(ms);
         } catch (InterruptedException e) {
             e.printStackTrace();
+        }
+    }
+
+    //TODO: run in a separate thread, move in other class ???
+    public void addRecord() {
+        boolean fail = false;
+        while (!fail) {
+            try {
+                PiHealthStatistics.getInstance().addRecord(getCpuTemperature(), getCpuFrequency(), Fan.getInstance().getStatus());
+            } catch (Exception ex) {
+                fail = true;
+                //TODO: log error
+            }
+
+            sleep(2_000);
         }
     }
 }

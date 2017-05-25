@@ -1,9 +1,7 @@
 package Statistics;
 
 import Configuration.Configuration;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
-import java.sql.Time;
 import java.util.*;
 
 /**
@@ -36,6 +34,10 @@ public class PiHealthStatistics {
         return instance;
     }
 
+    public Result addRecord(PiHealthRecord record) {
+        return addRecord(record.getCpuTemperature(), record.getCpuFrequency(), record.isFanOn());
+    }
+
     public Result addRecord(double cpuTemp, int cpuFreq, boolean fanIsOn) {
         if (cpuTemp < 1 || cpuFreq < 1)
             return Result.INVALID_ARGUMENT_PROVIDED;
@@ -57,16 +59,20 @@ public class PiHealthStatistics {
             }
         }
         
-        this.records.put(System.currentTimeMillis(), new PiHealthRecord(cpuTemp, cpuFreq, fanIsOn));
+        this.records.put(getCurrentTimeMillis(), new PiHealthRecord(cpuTemp, cpuFreq, fanIsOn));
         return Result.OK;
     }
-    
+
+    protected long getCurrentTimeMillis() {
+        return System.currentTimeMillis();
+    }
+
     public Map<Long, PiHealthRecord> getRecords() {
         return records;
     }
     
     public Map<Long, PiHealthRecord> getRecordsMapSince(long timestamp) {
-        if (timestamp < 1 || timestamp > System.currentTimeMillis()) {
+        if (timestamp < 1 || timestamp > getCurrentTimeMillis()) {
             // TODO: print a proper error message ?!
             return null;
         }
@@ -81,7 +87,7 @@ public class PiHealthStatistics {
     }
     
     public List<PiHealthRecord> getRecordsListSince(long timestamp) {
-        if (timestamp < 1 || timestamp > System.currentTimeMillis()) {
+        if (timestamp < 1 || timestamp > getCurrentTimeMillis()) {
             // TODO: print a proper error message ?!
             return null;
         }
@@ -95,7 +101,7 @@ public class PiHealthStatistics {
         return recordsSince;
     }
 
-    private void clear() {
+    public void clearRecords() {
         records.clear();
     }
 }

@@ -1,9 +1,20 @@
+import RaspberryPi.PiBash;
+import RaspberryPi.RPi;
+
 /*
  * Created by dev on 28.03.2017.
  */
 public class Fan {
-    private boolean on;
     private static Fan instance;
+    private PiBash bash;
+    private RPi pi;
+    private boolean fanIsOn;
+
+    private Fan() {
+        bash = new PiBash();
+        pi = new RPi();
+        fanIsOn = false;
+    }
 
     public static Fan getInstance() {
         if (null == instance)
@@ -13,8 +24,8 @@ public class Fan {
 
     public boolean start() {
         try {
-//            PiBash.execute(RPi.getResource("fan_start.sh"));
-            on = true;
+            bash.execute(pi.getResourceContent("fan_start.sh"));
+            fanIsOn = true;
         } catch (Exception e) {
             //TODO: log error
             return false;
@@ -23,15 +34,11 @@ public class Fan {
     }
 
     public void stop() {
-//        PiBash.execute(RPi.getResource("fan_stop.sh"));
-        on = false;
+        bash.execute(pi.getResourceContent("fan_stop.sh"));
+        fanIsOn = false;
     }
 
     public boolean getStatus() {
-        return on;
-    }
-
-    private Fan() {
-        on = false;
+        return fanIsOn;
     }
 }

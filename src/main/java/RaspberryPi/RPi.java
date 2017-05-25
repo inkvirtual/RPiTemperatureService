@@ -4,15 +4,21 @@ package RaspberryPi;
  * Created by dev on 28.03.2017.
  */
 public class RPi {
-    public static void shutdown() {
-//        PiBash.execute("shutdown.sh");
+    private PiBash bash;
+
+    public RPi() {
+        this.bash = new PiBash();
     }
 
-    private static String getResourcesPath() {
+    public void shutdown() {
+        bash.execute(getResourceContent("shutdown.sh"));
+    }
+
+    private String getResourcesPath() {
         try {
             String resorcesPath = System.getProperty("rpi_temp_service_resources_path");
             if (null == resorcesPath || resorcesPath.length() == 0) {
-                System.err.println("null or empty \"rpi_temp_service_resources_path\" property");
+                System.err.println("ERROR: null or empty \"rpi_temp_service_resources_path\" property");
                 return null;
             }
 
@@ -26,7 +32,7 @@ public class RPi {
         }
     }
 
-    public static String getResource(String fileName) {
+    public String getResourceContent(String fileName) {
         if (null == fileName || fileName.length() == 0) {
             System.err.println("null or empty filename");
             return null;
