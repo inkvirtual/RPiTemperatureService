@@ -1,6 +1,5 @@
-package Fan;
+package RaspberryPi;
 
-import RaspberryPi.PiBash;
 import Resources.ResourcesHelper;
 
 /*
@@ -11,9 +10,9 @@ public class Fan {
     private ResourcesHelper resourceHelper;
     private boolean fanIsOn;
 
-    public Fan(ResourcesHelper resourcesHelper) {
+    public Fan(PiBash bash, ResourcesHelper resourcesHelper) {
         this.resourceHelper = resourcesHelper;
-        this.bash = new PiBash();
+        this.bash = bash;
         this.fanIsOn = false;
     }
 
@@ -35,4 +34,11 @@ public class Fan {
     public boolean isFanOn() {
         return fanIsOn;
     }
+
+    public enum FanFailureAction {
+        LOG,
+        SHUTDOWN
+    }
 }
+
+

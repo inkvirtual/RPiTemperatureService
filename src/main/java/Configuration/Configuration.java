@@ -23,7 +23,7 @@ public class Configuration implements IConfiguration {
         InputStream fis = null;
 
         try {
-            checkPropsFileNameValid(propertiesFileName);
+            resourcesHelper.checkPropsFileNameValid(propertiesFileName);
 
             fis = new FileInputStream(propertiesFileName);
             propsFile.load(fis);
@@ -51,26 +51,6 @@ public class Configuration implements IConfiguration {
     @Override
     public Map<String, String> getProperties() {
         return this.properties;
-    }
-
-    private boolean checkPropsFileNameValid(String propsFileName) {
-        if (propsFileName == null || propsFileName.length() == 0)
-            throw new IllegalArgumentException("Null or empty properties file name");
-
-        try {
-            String[] tokens = propsFileName.split(".");
-
-            if (tokens.length == 1)
-                throw new IllegalArgumentException("Invalid properties file name:" + propsFileName);
-
-            if (!propsFileName.endsWith(".properties"))
-                throw new IllegalArgumentException("Invalid properties file name extension");
-
-        } catch (Exception ex) {
-            throw ex;
-        }
-
-        return true;
     }
 
     public ResourcesHelper getResourcesHelper() {

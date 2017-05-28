@@ -1,34 +1,36 @@
-package CPU;
+package RaspberryPi;
 
 import RaspberryPi.PiBash;
-import RaspberryPi.RPi;
 import Resources.ResourcesHelper;
 
 /*
  * Created by dev on 28.03.2017.
  */
 public class Cpu {
-    private static final int LOW_FREQUENCY = 600_000;
-    private static final int HIGH_FREQUENCY = 1_200_000;
+    public static final int LOW_FREQUENCY = 600_000;
+    public static final int HIGH_FREQUENCY = 1_200_000;
 
     private PiBash bash;
     private ResourcesHelper resourcesHelper;
 
-    public Cpu(ResourcesHelper resourcesHelper) {
+    public Cpu(PiBash bash, ResourcesHelper resourcesHelper) {
         this.resourcesHelper = resourcesHelper;
-        this.bash = new PiBash();
+        this.bash = bash;
     }
 
     public int getUsage() {
-        return Integer.parseInt(bash.execute(resourcesHelper.getFullPath("get_cpu_usage.sh")));
+        return Integer.parseInt(bash.execute(
+                resourcesHelper.getFullPath("get_cpu_usage.sh")));
     }
 
     public double getTemperature() {
-        return Double.parseDouble(bash.execute(resourcesHelper.getFullPath("get_cpu_temperature.sh")));
+        return Double.parseDouble(bash.execute(
+                resourcesHelper.getFullPath("get_cpu_temperature.sh")));
     }
 
     public int getFrequency() {
-        return Integer.parseInt(bash.execute(resourcesHelper.getFullPath("get_cpu_frequency.sh")));
+        return Integer.parseInt(bash.execute(
+                resourcesHelper.getFullPath("get_cpu_frequency.sh")));
     }
 
     public boolean isCpuThrottling() {

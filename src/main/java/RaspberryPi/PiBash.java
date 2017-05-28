@@ -10,11 +10,6 @@ import java.io.InputStreamReader;
 public class PiBash {
 
     public String execute(String command) {
-        return execute_internal(command);
-    }
-
-    private String execute_internal(String command) {
-//    public String execute(String command) {
         StringBuilder returnValue = new StringBuilder();
         BufferedReader in = null;
         boolean failed = false;
@@ -38,7 +33,6 @@ public class PiBash {
             failed = true;
         } finally {
             closeReader(in);
-            in = null;
             return failed ? null : returnValue.toString();
         }
     }

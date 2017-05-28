@@ -1,7 +1,7 @@
 package Service;
 
-import CPU.Cpu;
-import Fan.Fan;
+import RaspberryPi.Cpu;
+import RaspberryPi.Fan;
 import RaspberryPi.PiBash;
 import Resources.ResourcesHelper;
 
@@ -11,10 +11,14 @@ import Resources.ResourcesHelper;
 public class Controller {
     private Cpu cpu;
     private Fan fan;
+    private PiBash bash;
+    private ResourcesHelper resourcesHelper;
 
     public Controller(ResourcesHelper resourcesHelper) {
-        cpu = new Cpu(resourcesHelper);
-        fan = new Fan(resourcesHelper);
+        this.bash = new PiBash();
+        this.cpu = new Cpu(bash, resourcesHelper);
+        this.fan = new Fan(bash, resourcesHelper);
+        this.resourcesHelper = resourcesHelper;
     }
 
     public boolean startFan() {
@@ -43,5 +47,9 @@ public class Controller {
 
     public double getCpuTemperature() {
         return cpu.getTemperature();
+    }
+
+    public void shutdown() {
+        bash.execute(resourcesHelper.getFullPath("shutdown.sh"));
     }
 }

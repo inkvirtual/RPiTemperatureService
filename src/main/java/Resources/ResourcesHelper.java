@@ -4,14 +4,13 @@ package Resources;
  * Created by fanta on 5/27/17.
  */
 public class ResourcesHelper {
-//    private static final String DEFAULT_RESOURCES_PATH = "/home/pi/HomeAutomation/RPiTemperatureService/";
     private String resourcesPath;
 
-//    public ResourcesHelper() {
-//        init(DEFAULT_RESOURCES_PATH);
-//    }
-
     public ResourcesHelper(String resourcesPath) {
+        if (resourcesPath == null || resourcesPath.length() == 0)
+            throw new IllegalArgumentException(
+                    "Null or empty \"resourcesPath\" argument");
+
         init(resourcesPath);
     }
 
@@ -19,7 +18,7 @@ public class ResourcesHelper {
         this.resourcesPath = normalizePath(resourcesPath);
     }
 
-    private String normalizePath(String path) {
+    protected String normalizePath(String path) {
         if (path.charAt(path.length() - 1) != '/')
             path += '/';
         return path;
@@ -28,24 +27,6 @@ public class ResourcesHelper {
     public String getResourcesPath() {
         return resourcesPath;
     }
-
-    //    private String getResourcesPath() {
-//        try {
-//            String resorcesPath = System.getProperty("rpi_temp_service_resources_path");
-//            if (null == resorcesPath || resorcesPath.length() == 0) {
-//                System.err.println("ERROR: null or empty \"rpi_temp_service_resources_path\" property");
-//                return null;
-//            }
-//
-//            if (resorcesPath.charAt(resorcesPath.length() - 1) != '/')
-//                resorcesPath += '/';
-//
-//            return resorcesPath;
-//        } catch (Exception ex) {
-//            System.err.println(ex.toString());
-//            return null;
-//        }
-//    }
 
     public String getFullPath(String fileName) {
         if (null == fileName || fileName.length() == 0) {
@@ -56,5 +37,23 @@ public class ResourcesHelper {
         return resourcesPath + fileName;
     }
 
+    public boolean checkPropsFileNameValid(String propsFileName) {
+        if (propsFileName == null || propsFileName.length() == 0)
+            throw new IllegalArgumentException("Null or empty properties file name");
 
+        try {
+            String[] tokens = propsFileName.split(".");
+
+            if (tokens.length == 1)
+                throw new IllegalArgumentException("Invalid properties file name:" + propsFileName);
+
+            if (!propsFileName.endsWith(".properties"))
+                throw new IllegalArgumentException("Invalid properties file name extension");
+
+        } catch (Exception ex) {
+            throw ex;
+        }
+
+        return true;
+    }
 }

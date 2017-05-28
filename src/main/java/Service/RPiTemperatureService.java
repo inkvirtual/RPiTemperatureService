@@ -1,10 +1,8 @@
 package Service;
 
 import Configuration.Configuration;
-import Fan.Fan;
-import Fan.FanFailureAction;
-import RaspberryPi.RPi;
-import Statistics.PiHealthStatistics;
+import RaspberryPi.Fan;
+//import Statistics.PiHealthStatistics;
 
 import java.util.Map;
 
@@ -18,16 +16,28 @@ public class RPiTemperatureService implements IService {
     private boolean fanShouldStartAtHighCpuUsage;
     private int cpuHighUsagePercent;
     private int fanCollingMinTimeS;
-    private FanFailureAction fanFailureAction;
+    private Fan.FanFailureAction fanFailureAction;
     private long sleepTimeMs;
     private State state;
 
     private Controller controller;
-    private RPi rpi;
 
     // TODO: switch to interface, not class implementation
     public RPiTemperatureService(Configuration configuration) {
         init(configuration);
+    }
+
+    private static void infiniteWait() {
+        while (true)
+            sleep(500);
+    }
+
+    private static void sleep(long ms) {
+        try {
+            Thread.sleep(ms);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     // TODO: switch to interface, not implementation
@@ -40,12 +50,11 @@ public class RPiTemperatureService implements IService {
         cpuHighUsagePercent = Integer.parseInt(config.getOrDefault("fan.start.cpu.usage.percent", "60"));
         fanCollingMinTimeS = Integer.parseInt(config.getOrDefault("fan.colling.min.time.seconds", "60"));
         fanFailureAction = config.getOrDefault("fan.failure.action",
-                FanFailureAction.SHUTDOWN.name()).equals(FanFailureAction.LOG.name()) ?
-                FanFailureAction.LOG : FanFailureAction.SHUTDOWN;
+                Fan.FanFailureAction.SHUTDOWN.name()).equals(Fan.FanFailureAction.LOG.name()) ?
+                Fan.FanFailureAction.LOG : Fan.FanFailureAction.SHUTDOWN;
         sleepTimeMs = Integer.parseInt(config.getOrDefault("sleep.time.ms", "1000"));
 
         controller = new Controller(configuration.getResourcesHelper());
-        rpi = new RPi(configuration.getResourcesHelper());
 
         System.out.println(config.toString());
     }
@@ -89,16 +98,17 @@ public class RPiTemperatureService implements IService {
                         break;
                     }
 
+                    // TODO: poate ar trebui sa treaca ceva timp pina ce sa oprim ventilatorul ???
                     if (controller.isFanOn()) {
                         System.out.println("System cooled down:" + cpuTemp + "C, " + controller.getCpuFrequency() + "MHz");
                         switchState(State.STOPPING_FAN);
                     }
 
                     //Sleep 5s
-                    sleep(5000);
+                    sleep(5_000);
                     break;
                 case STARTING_FAN:
-                    System.out.print("Starting fan:");
+                    System.out.print("Starting fan: ");
                     if (controller.isFanOn()) {
                         System.out.println("already on");
                         fanStartTime = System.currentTimeMillis();
@@ -114,7 +124,7 @@ public class RPiTemperatureService implements IService {
 
                     break;
                 case CHECKING_COOLING:
-                    while (System.currentTimeMillis() < (fanStartTime + fanCollingMinTimeS * 1000)) {
+                    while (System.currentTimeMillis() < (fanStartTime + fanCollingMinTimeS * 1_000)) {
 
                         if (!controller.isFanOn()) {
                             System.err.println("FAN is off");
@@ -131,7 +141,8 @@ public class RPiTemperatureService implements IService {
                             break;
                         }
                     }
-                    System.out.println("FAN is on for " + ((System.currentTimeMillis() - fanStartTime) / 1000) + "s, trigger point:" + fanCollingMinTimeS + "s");
+                    System.out.println("FAN is on for " + ((System.currentTimeMillis() - fanStartTime) / 1_000) +
+                            "s, trigger point:" + fanCollingMinTimeS + "s");
                     switchState(State.CHECKING_SYSTEM);
 
                     break;
@@ -149,9 +160,9 @@ public class RPiTemperatureService implements IService {
                 case TERMINATING:
                     controller.stopFan();
 
-                    if (fanFailureAction.equals(FanFailureAction.SHUTDOWN)) {
-                        System.out.println("RPiTemperatureService execution terminated, shutting down RaspberryPi.RPi");
-                        rpi.shutdown();
+                    if (fanFailureAction.equals(Fan.FanFailureAction.SHUTDOWN)) {
+                        System.out.println("RPiTemperatureService execution terminated, shutting down RPi");
+                        controller.shutdown();
                     }
                     terminated = true;
                     break;
@@ -188,77 +199,27 @@ public class RPiTemperatureService implements IService {
         return false;
     }
 
-    private static void infiniteWait() {
-        while (true)
-            sleep(500);
-    }
-
-    private static void sleep(long ms) {
-        try {
-            Thread.sleep(ms);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
-
     //TODO: run in a separate thread, move in other class ???
-    public void addRecord() {
-        boolean fail = false;
-        while (!fail) {
-            try {
-                PiHealthStatistics.getInstance().
-                        addRecord(controller.getCpuTemperature(), controller.getCpuFrequency(), controller.isFanOn());
-            } catch (Exception ex) {
-                fail = true;
-                //TODO: log error
-            }
+//    public void addRecord() {
+//        boolean fail = false;
+//        while (!fail) {
+//            try {
+//                PiHealthStatistics.getInstance().
+//                        addRecord(controller.getCpuTemperature(), controller.getCpuFrequency(), controller.isFanOn());
+//            } catch (Exception ex) {
+//                fail = true;
+//                //TODO: log error
+//            }
+//
+//            sleep(2_000);
+//        }
+//    }
 
-            sleep(2_000);
-        }
+    public enum State {
+        CHECKING_SYSTEM,
+        STARTING_FAN,
+        CHECKING_COOLING,
+        STOPPING_FAN,
+        TERMINATING
     }
-
-//    private boolean checkArgs(String[] args) {
-//        if (args == null || args.length == 0)
-//            throw new IllegalArgumentException("Null or empty arguments provided");
-//
-//        if (args.length > 1)
-//            throw new IllegalArgumentException("Too many arguments provided");
-//
-//        if (args == null)
-//            return true;
-//
-//        try {
-//            String[] tokens = args[0].split(".");
-//
-//            if (tokens.length == 1)
-//                throw new IllegalArgumentException("Invalid properties file name:" + args[0]);
-//
-//            if (!tokens[0].endsWith(".properties"))
-//                throw new IllegalArgumentException("Invalid properties file name extension");
-//
-//        } catch (Exception ex) {
-//            throw ex;
-//        }
-//
-//        return true;
-//    }
-
-//    private boolean loadResourcesPath(String[] args) {
-//        if (null != args && args.length > 1) {
-//            System.err.println("too many arguments provided");
-//            return false;
-//        }
-//
-//        if (null == args || args.length == 0) {
-//            System.setProperty("rpi_temp_service_resources_path", "/home/pi/HomeAutomation/RPiTemperatureService");
-//            System.out.print("no argument provided, using default resources path:");
-//        } else {
-//            System.setProperty("rpi_temp_service_resources_path", args[0]);
-//            System.out.print("using resources path:");
-//        }
-//        System.out.println(System.getProperty("rpi_temp_service_resources_path"));
-//
-//        return true;
-//    }
-
 }
