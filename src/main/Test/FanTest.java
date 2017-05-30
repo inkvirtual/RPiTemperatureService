@@ -1,5 +1,5 @@
-package RaspberryPi;
-
+import RaspberryPi.Fan;
+import RaspberryPi.PiBash;
 import Resources.ResourcesHelper;
 import org.junit.After;
 import org.junit.Assert;

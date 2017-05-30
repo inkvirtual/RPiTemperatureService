@@ -13,7 +13,7 @@ public class RPiTemperatureService implements IService {
 
     private boolean fanAlwaysOn;
     private double fanStartTempC;
-    private boolean fanShouldStartAtHighCpuUsage;
+    private boolean shouldFanStartAtHighCpuUsage;
     private int cpuHighUsagePercent;
     private int fanCollingMinTimeS;
     private Fan.FanFailureAction fanFailureAction;
@@ -27,25 +27,12 @@ public class RPiTemperatureService implements IService {
         init(configuration);
     }
 
-    private static void infiniteWait() {
-        while (true)
-            sleep(500);
-    }
-
-    private static void sleep(long ms) {
-        try {
-            Thread.sleep(ms);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
-
     // TODO: switch to interface, not implementation
     private void init(Configuration configuration) {
         Map<String, String> config = configuration.getProperties();
         fanAlwaysOn = config.getOrDefault("fan.always.on", "false").equals("true") ? true : false;
         fanStartTempC = Double.parseDouble(config.getOrDefault("fan.start.temperature.celsius", "70"));
-        fanShouldStartAtHighCpuUsage = config.
+        shouldFanStartAtHighCpuUsage = config.
                 getOrDefault("fan.start.cpu.usage", "false").equals("true") ? true : false;
         cpuHighUsagePercent = Integer.parseInt(config.getOrDefault("fan.start.cpu.usage.percent", "60"));
         fanCollingMinTimeS = Integer.parseInt(config.getOrDefault("fan.colling.min.time.seconds", "60"));
@@ -78,36 +65,36 @@ public class RPiTemperatureService implements IService {
 
                     if (cpuTemp > fanStartTempC) {
                         System.out.println("CPU Temp:" + cpuTemp + "C, trigger point:" + fanStartTempC + "C");
-                        switchState(State.STARTING_FAN);
+                        switchState(State.STARTING_COOLING);
                         break;
                     }
 
-                    if (fanShouldStartAtHighCpuUsage) {
+                    if (shouldFanStartAtHighCpuUsage) {
                         int cpuUsage = controller.getCpuUsage();
 
                         if (cpuUsage > cpuHighUsagePercent) {
                             System.out.println("CPU Usage:" + cpuUsage + "%, trigger point:" + cpuHighUsagePercent + "%");
-                            switchState(State.STARTING_FAN);
+                            switchState(State.STARTING_COOLING);
                             break;
                         }
                     }
 
                     if (controller.isCpuThrottling()) {
                         System.err.println("CPU Throttling detected, frequency:" + controller.getCpuFrequency() + "MHz");
-                        switchState(State.STARTING_FAN);
+                        switchState(State.STARTING_COOLING);
                         break;
                     }
 
                     // TODO: poate ar trebui sa treaca ceva timp pina ce sa oprim ventilatorul ???
                     if (controller.isFanOn()) {
                         System.out.println("System cooled down:" + cpuTemp + "C, " + controller.getCpuFrequency() + "MHz");
-                        switchState(State.STOPPING_FAN);
+                        switchState(State.STOPPING_COOLING);
                     }
 
                     //Sleep 5s
                     sleep(5_000);
                     break;
-                case STARTING_FAN:
+                case STARTING_COOLING:
                     System.out.print("Starting fan: ");
                     if (controller.isFanOn()) {
                         System.out.println("already on");
@@ -146,9 +133,9 @@ public class RPiTemperatureService implements IService {
                     switchState(State.CHECKING_SYSTEM);
 
                     break;
-                case STOPPING_FAN:
+                case STOPPING_COOLING:
                     if (!controller.isFanOn()) {
-                        System.err.println("FAN is off, should be on");
+                        System.err.println("Can not stop FAN because it is already off");
                     } else {
                         System.out.println("Stopping FAN");
                         controller.stopFan();
@@ -172,7 +159,7 @@ public class RPiTemperatureService implements IService {
                     switchState(State.TERMINATING);
                     break;
             }
-            sleep(1000);
+            sleep(1_000);
         }
 
         System.out.println("RPiTemperatureService execution terminated, closing service");
@@ -187,11 +174,24 @@ public class RPiTemperatureService implements IService {
         state = newState;
     }
 
+    private static void infiniteWait() {
+        while (true)
+            sleep(500);
+    }
+
+    private static void sleep(long ms) {
+        try {
+            Thread.sleep(ms);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
     private boolean shouldStartFan() {
         if (controller.getCpuTemperature() > fanStartTempC)
             return true;
 
-        if (fanShouldStartAtHighCpuUsage) {
+        if (shouldFanStartAtHighCpuUsage) {
             if (controller.getCpuUsage() >= cpuHighUsagePercent)
                 return true;
         }
@@ -215,11 +215,11 @@ public class RPiTemperatureService implements IService {
 //        }
 //    }
 
-    public enum State {
+    enum State {
         CHECKING_SYSTEM,
-        STARTING_FAN,
+        STARTING_COOLING,
         CHECKING_COOLING,
-        STOPPING_FAN,
+        STOPPING_COOLING,
         TERMINATING
     }
 }

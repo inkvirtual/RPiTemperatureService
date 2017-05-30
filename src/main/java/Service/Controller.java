@@ -3,6 +3,7 @@ package Service;
 import RaspberryPi.Cpu;
 import RaspberryPi.Fan;
 import RaspberryPi.PiBash;
+import RaspberryPi.RPi;
 import Resources.ResourcesHelper;
 
 /**
@@ -11,6 +12,7 @@ import Resources.ResourcesHelper;
 public class Controller {
     private Cpu cpu;
     private Fan fan;
+    private RPi rpi;
     private PiBash bash;
     private ResourcesHelper resourcesHelper;
 
@@ -18,6 +20,7 @@ public class Controller {
         this.bash = new PiBash();
         this.cpu = new Cpu(bash, resourcesHelper);
         this.fan = new Fan(bash, resourcesHelper);
+        this.rpi = new RPi(bash, resourcesHelper);
         this.resourcesHelper = resourcesHelper;
     }
 
@@ -50,6 +53,6 @@ public class Controller {
     }
 
     public void shutdown() {
-        bash.execute(resourcesHelper.getFullPath("shutdown.sh"));
+        rpi.shutdown();
     }
 }

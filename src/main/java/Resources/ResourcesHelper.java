@@ -18,7 +18,7 @@ public class ResourcesHelper {
         this.resourcesPath = normalizePath(resourcesPath);
     }
 
-    protected String normalizePath(String path) {
+    public String normalizePath(String path) {
         if (path.charAt(path.length() - 1) != '/')
             path += '/';
         return path;
