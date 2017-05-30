@@ -30,6 +30,7 @@ public class RPiTemperatureService implements IService {
     // TODO: switch to interface, not implementation
     private void init(Configuration configuration) {
         Map<String, String> config = configuration.getProperties();
+        // TODO: fanAlwaysOn is not used
         fanAlwaysOn = config.getOrDefault("fan.always.on", "false").equals("true") ? true : false;
         fanStartTempC = Double.parseDouble(config.getOrDefault("fan.start.temperature.celsius", "70"));
         shouldFanStartAtHighCpuUsage = config.
@@ -50,7 +51,8 @@ public class RPiTemperatureService implements IService {
     public void start() {
         System.out.println("Starting RPi Temperature Service");
 
-        switchState(State.CHECKING_SYSTEM);
+//        switchState(State.CHECKING_SYSTEM);
+        state = State.CHECKING_SYSTEM;
         boolean terminated = false;
         long fanStartTime = 0;
 
@@ -172,6 +174,11 @@ public class RPiTemperatureService implements IService {
             System.out.println("Switch state from " + state.name() + " to " + newState.name());
 
         state = newState;
+    }
+
+    // TODO: find a better way to mock controller
+    public void setController(Controller controller) {
+        this.controller = controller;
     }
 
     private static void infiniteWait() {
